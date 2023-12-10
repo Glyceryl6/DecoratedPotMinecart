@@ -3,8 +3,10 @@ package com.glyceryl6.dpm.entity;
 import com.glyceryl6.dpm.DPM;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stats;
@@ -23,15 +25,19 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.DecoratedPotBlockEntity;
 import net.minecraft.world.level.block.entity.Hopper;
 import net.minecraft.world.level.block.entity.HopperBlockEntity;
+import net.minecraft.world.level.gameevent.GameEvent;
 
 @SuppressWarnings({"resource", "ConstantConditions"})
 public class MinecartDecoratedPot extends AbstractMinecartContainer implements Hopper {
 
     private DecoratedPotBlockEntity.Decorations decorations = DecoratedPotBlockEntity.Decorations.EMPTY;
+    private static final EntityDataAccessor<ItemStack> FRONT_STACK = SynchedEntityData.defineId(MinecartDecoratedPot.class, EntityDataSerializers.ITEM_STACK);
+    private static final EntityDataAccessor<ItemStack> BACK_STACK = SynchedEntityData.defineId(MinecartDecoratedPot.class, EntityDataSerializers.ITEM_STACK);
+    private static final EntityDataAccessor<ItemStack> LEFT_STACK = SynchedEntityData.defineId(MinecartDecoratedPot.class, EntityDataSerializers.ITEM_STACK);
+    private static final EntityDataAccessor<ItemStack> RIGHT_STACK = SynchedEntityData.defineId(MinecartDecoratedPot.class, EntityDataSerializers.ITEM_STACK);
 
     public MinecartDecoratedPot(EntityType<? extends MinecartDecoratedPot> type, Level level) {
         super(type, level);
@@ -41,12 +47,41 @@ public class MinecartDecoratedPot extends AbstractMinecartContainer implements H
         super(DPM.MINECART_DECORATED_POT.get(), x, y, z, level);
     }
 
-    public DecoratedPotBlockEntity.Decorations getDecorations() {
-        return this.decorations;
+    public ItemStack[] getDecorations() {
+        return new ItemStack[] {
+                this.entityData.get(FRONT_STACK),
+                this.entityData.get(BACK_STACK),
+                this.entityData.get(LEFT_STACK),
+                this.entityData.get(RIGHT_STACK)
+        };
     }
 
-    public void setDecorations(DecoratedPotBlockEntity.Decorations decorations) {
-        this.decorations = decorations;
+    public void setDecorationsInDefault(Item front, Item back, Item left, Item right) {
+        this.entityData.set(FRONT_STACK, front.getDefaultInstance());
+        this.entityData.set(BACK_STACK, back.getDefaultInstance());
+        this.entityData.set(LEFT_STACK, left.getDefaultInstance());
+        this.entityData.set(RIGHT_STACK, right.getDefaultInstance());
+    }
+
+    public void setDecorationsFromItemTags(DecoratedPotBlockEntity.Decorations decorations) {
+        this.entityData.set(FRONT_STACK, decorations.front().getDefaultInstance());
+        this.entityData.set(BACK_STACK, decorations.back().getDefaultInstance());
+        this.entityData.set(LEFT_STACK, decorations.left().getDefaultInstance());
+        this.entityData.set(RIGHT_STACK, decorations.right().getDefaultInstance());
+    }
+
+    @Override
+    protected void defineSynchedData() {
+        super.defineSynchedData();
+        this.entityData.define(FRONT_STACK, Items.BRICK.getDefaultInstance());
+        this.entityData.define(BACK_STACK, Items.BRICK.getDefaultInstance());
+        this.entityData.define(LEFT_STACK, Items.BRICK.getDefaultInstance());
+        this.entityData.define(RIGHT_STACK, Items.BRICK.getDefaultInstance());
+    }
+
+    @Override
+    public boolean canBeRidden() {
+        return false;
     }
 
     @Override
@@ -67,6 +102,23 @@ public class MinecartDecoratedPot extends AbstractMinecartContainer implements H
     @Override
     public double getLevelZ() {
         return this.getZ();
+    }
+
+    @Override
+    public boolean hurt(DamageSource source, float amount) {
+        if (this.level().isClientSide || this.isRemoved()) {
+            return true;
+        } else if (this.isInvulnerableTo(source)) {
+            return false;
+        } else {
+            this.setHurtDir(-this.getHurtDir());
+            this.setHurtTime(10);
+            this.markHurt();
+            this.setDamage(this.getDamage() + amount * 10.0F);
+            this.gameEvent(GameEvent.ENTITY_DAMAGE, source.getEntity());
+            this.destroy(source);
+            return true;
+        }
     }
 
     @Override
@@ -94,7 +146,6 @@ public class MinecartDecoratedPot extends AbstractMinecartContainer implements H
                 double z = this.position().z;
                 serverLevel.sendParticles(ParticleTypes.DUST_PLUME, x, y, z, 7, 0.0F, 0.0F, 0.0F, 0.0F);
             }
-
         } else {
             this.level().playSound(null, this.blockPosition(), SoundEvents.DECORATED_POT_INSERT_FAIL, SoundSource.BLOCKS, 1.0F, 1.0F);
         }
@@ -129,12 +180,12 @@ public class MinecartDecoratedPot extends AbstractMinecartContainer implements H
 
     @Override
     public void destroy(DamageSource source) {
+        GameRules gameRules = this.level().getGameRules();
         boolean isUseTool = source.getEntity() instanceof Player player &&
                 player.getItemInHand(player.getUsedItemHand()).is(ItemTags.TOOLS);
-        if (this.level().getGameRules().getBoolean(GameRules.RULE_DOENTITYDROPS)) {
-            if (source.is(DamageTypeTags.IS_PROJECTILE) || isUseTool) {
-                SoundEvent breakSound = SoundType.DECORATED_POT_CRACKED.getBreakSound();
-                this.level().playSound(null, this.blockPosition(), breakSound, SoundSource.BLOCKS, 1.0F, 0.8F);
+        if (gameRules.getBoolean(GameRules.RULE_DOENTITYDROPS)) {
+            if ((source.is(DamageTypeTags.IS_PROJECTILE) && gameRules.getBoolean(GameRules.RULE_PROJECTILESCANBREAKBLOCKS)) || isUseTool) {
+                this.level().playSound(null, this.blockPosition(), SoundEvents.DECORATED_POT_BREAK, SoundSource.BLOCKS, 1.0F, 0.8F);
                 this.decorations.sorted().map(Item::getDefaultInstance).forEach(this::spawnAtLocation);
                 this.chestVehicleDestroyed(source, this.level(), this);
                 this.spawnAtLocation(Items.MINECART);

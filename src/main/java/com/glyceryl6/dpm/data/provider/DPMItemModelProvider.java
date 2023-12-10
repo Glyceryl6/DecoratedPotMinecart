@@ -1,4 +1,4 @@
-package com.glyceryl6.dpm.data;
+package com.glyceryl6.dpm.data.provider;
 
 import com.glyceryl6.dpm.DPM;
 import net.minecraft.data.PackOutput;

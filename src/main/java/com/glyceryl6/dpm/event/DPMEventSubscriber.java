@@ -3,8 +3,9 @@ package com.glyceryl6.dpm.event;
 import com.glyceryl6.dpm.DPM;
 import com.glyceryl6.dpm.client.DPMModelLayers;
 import com.glyceryl6.dpm.client.DecoratedPotMinecartRenderer;
-import com.glyceryl6.dpm.data.DPMItemModelProvider;
-import com.glyceryl6.dpm.data.DPMRecipeProvider;
+import com.glyceryl6.dpm.data.provider.DPMItemModelProvider;
+import com.glyceryl6.dpm.data.provider.DPMLootTableProvider;
+import com.glyceryl6.dpm.data.provider.DPMRecipeProvider;
 import net.minecraft.client.model.MinecartModel;
 import net.minecraft.client.renderer.blockentity.DecoratedPotRenderer;
 import net.minecraft.core.HolderLookup;
@@ -31,6 +32,7 @@ public class DPMEventSubscriber {
         CompletableFuture<HolderLookup.Provider> provider = event.getLookupProvider();
         generator.addProvider(event.includeServer(), new DPMItemModelProvider(output, existingFileHelper));
         generator.addProvider(event.includeServer(), new DPMRecipeProvider(output, provider));
+        generator.addProvider(event.includeServer(), DPMLootTableProvider.create(output));
     }
 
     @OnlyIn(Dist.CLIENT)

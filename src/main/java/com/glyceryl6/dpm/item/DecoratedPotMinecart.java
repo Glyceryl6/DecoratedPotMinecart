@@ -60,7 +60,7 @@ public class DecoratedPotMinecart extends Item {
                 MinecartDecoratedPot minecart = new MinecartDecoratedPot(serverLevel, x, y, z);
                 CompoundTag decorationsTag = stack.getTagElement("Decorations");
                 if (decorationsTag != null && !decorationsTag.isEmpty()) {
-                    minecart.setDecorations(DecoratedPotBlockEntity.Decorations.load(decorationsTag));
+                    minecart.setDecorationsFromItemTags(DecoratedPotBlockEntity.Decorations.load(decorationsTag));
                 }
 
                 EntityType.<MinecartDecoratedPot>createDefaultStackConfig(serverLevel, stack, context.getPlayer()).accept(minecart);
@@ -118,7 +118,7 @@ public class DecoratedPotMinecart extends Item {
             MinecartDecoratedPot minecart = new MinecartDecoratedPot(serverLevel, d0, d1 + d3, d2);
             CompoundTag decorationsTag = stack.getTagElement("Decorations");
             if (decorationsTag != null && !decorationsTag.isEmpty()) {
-                minecart.setDecorations(DecoratedPotBlockEntity.Decorations.load(decorationsTag));
+                minecart.setDecorationsFromItemTags(DecoratedPotBlockEntity.Decorations.load(decorationsTag));
             }
 
             EntityType.<MinecartDecoratedPot>createDefaultStackConfig(serverLevel, stack, null).accept(minecart);

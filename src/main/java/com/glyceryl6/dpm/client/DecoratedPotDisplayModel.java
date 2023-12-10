@@ -9,9 +9,12 @@ import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.resources.model.Material;
 import net.minecraft.world.level.block.entity.DecoratedPotPatterns;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 import java.util.Objects;
 
+@OnlyIn(Dist.CLIENT)
 public class DecoratedPotDisplayModel<T extends MinecartDecoratedPot> extends EntityModel<T> {
 
     public final ModelPart neck;
