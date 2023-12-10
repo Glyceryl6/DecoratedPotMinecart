@@ -167,5 +167,5 @@
       "rolls": 1.0
     }
   ],
-  "random_sequence": "dpm:pots/desert_abandoned_mineshaft_pot"
+  "random_sequence": "decorated_pot_minecart:pots/desert_abandoned_mineshaft_pot"
 }

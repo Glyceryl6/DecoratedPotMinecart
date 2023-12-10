@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "decorated_pot_minecart:item/decorated_pot_minecart"
+  }
+}

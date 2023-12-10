@@ -33,7 +33,7 @@ runs {
         systemProperty 'mixin.env.remapRefMap', 'true'
         systemProperty 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
 
-        programArguments.addAll '-mixin.config=' + project.getProperty('mod_id') + '.mixins.json'
+        programArguments.addAll '-mixin.config=' + 'dpm.mixins.json'
     }
 
     client {
@@ -59,7 +59,7 @@ sourceSets.main.resources {
 }
 
 mixin {
-    config "${mod_id}.mixins.json"
+    config "dpm.mixins.json"
 }
 
 dependencies {
