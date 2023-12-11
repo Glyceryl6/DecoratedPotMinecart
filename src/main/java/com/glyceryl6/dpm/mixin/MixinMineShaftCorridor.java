@@ -8,6 +8,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.WorldGenLevel;
@@ -60,13 +61,17 @@ public abstract class MixinMineShaftCorridor extends MineshaftPieces.MineShaftPi
             MinecartDecoratedPot minecart = new MinecartDecoratedPot(level.getLevel(), xn, yn, zn);
             Map<Item, ResourceKey<String>> itemToPotTexture = AccessDecoratedPotPatterns.getItemToPotTexture();
             List<Item> itemList = new ArrayList<>(itemToPotTexture.keySet());
+            Item front = itemList.get(random.nextInt(itemList.size()));
             Item back = itemList.get(random.nextInt(itemList.size()));
             Item left = itemList.get(random.nextInt(itemList.size()));
             Item right = itemList.get(random.nextInt(itemList.size()));
-            Item front = itemList.get(random.nextInt(itemList.size()));
-            minecart.setDecorationsFromItemTags(new DecoratedPotBlockEntity.Decorations(back, left, right, front));
+            ItemStack decoratedPotMinecartStack = DPM.DECORATED_POT_MINECART.get().getDefaultInstance();
+            DecoratedPotBlockEntity.Decorations decorations = new DecoratedPotBlockEntity.Decorations(back, left, right, front);
+            decoratedPotMinecartStack.addTagElement("Decorations", decorations.save(new CompoundTag()));
+            minecart.setDecorationsInDefault(front, back, left, right);
             minecart.setLootTable(lootTable, random.nextLong());
-            level.addFreshEntity(minecart);
+            minecart.setDropStack(decoratedPotMinecartStack);
+            level.getLevel().addFreshEntity(minecart);
         }
     }
 
