@@ -50,6 +50,7 @@ public class DecoratedPotMinecart extends Item {
             return InteractionResult.FAIL;
         } else {
             ItemStack stack = context.getItemInHand();
+            ItemStack copyOfStack = new ItemStack(stack.getItem());
             if (level instanceof ServerLevel serverLevel) {
                 RailShape railShape = clickedState.getBlock() instanceof BaseRailBlock baseRailBlock
                         ? baseRailBlock.getRailDirection(clickedState, level, clickedPos, null) : RailShape.NORTH_SOUTH;
@@ -61,8 +62,10 @@ public class DecoratedPotMinecart extends Item {
                 CompoundTag decorationsTag = stack.getTagElement("Decorations");
                 if (decorationsTag != null && !decorationsTag.isEmpty()) {
                     minecart.setDecorationsFromItemTags(DecoratedPotBlockEntity.Decorations.load(decorationsTag));
+                    copyOfStack.addTagElement("Decorations", decorationsTag);
                 }
 
+                minecart.setDropStack(copyOfStack);
                 EntityType.<MinecartDecoratedPot>createDefaultStackConfig(serverLevel, stack, context.getPlayer()).accept(minecart);
                 serverLevel.addFreshEntity(minecart);
                 serverLevel.gameEvent(GameEvent.ENTITY_PLACE, clickedPos, GameEvent.Context.of(context.getPlayer(), serverLevel.getBlockState(clickedPos.below())));
