@@ -162,6 +162,18 @@
             }
           ],
           "name": "minecraft:diamond_block"
+        },
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "add": false,
+              "count": 0.0,
+              "function": "minecraft:set_count"
+            }
+          ],
+          "name": "minecraft:trial_key",
+          "weight": 20
         }
       ],
       "rolls": 1.0
