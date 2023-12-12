@@ -39,7 +39,7 @@ public class DPM {
     public static final DeferredHolder<RecipeSerializer<?>, RecipeSerializer<DecoratedPotMinecartRecipe>> DECORATED_POT_MINECART_SERIALIZER =
             RECIPE_SERIALIZERS.register("crafting_decorated_pot_minecart", () -> new SimpleCraftingRecipeSerializer<>(DecoratedPotMinecartRecipe::new));
 
-    public static final ResourceLocation DESERT_ABANDONED_MINESHAFT_POT = prefix("pots/desert_abandoned_mineshaft_pot");
+    public static final ResourceLocation ABANDONED_MINESHAFT_POT = prefix("pots/abandoned_mineshaft_pot");
 
     public DPM(IEventBus modEventBus) {
         ITEMS.register(modEventBus);

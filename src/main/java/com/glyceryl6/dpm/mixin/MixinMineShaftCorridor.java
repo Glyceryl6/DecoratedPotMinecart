@@ -41,11 +41,11 @@ public abstract class MixinMineShaftCorridor extends MineshaftPieces.MineShaftPi
     @Inject(method = "postProcess", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/levelgen/structure/structures/MineshaftPieces$MineShaftCorridor;maybePlaceCobWeb(Lnet/minecraft/world/level/WorldGenLevel;Lnet/minecraft/world/level/levelgen/structure/BoundingBox;Lnet/minecraft/util/RandomSource;FIII)V", ordinal = 7, shift = At.Shift.AFTER), locals = LocalCapture.CAPTURE_FAILHARD)
     public void postProcess(WorldGenLevel level, StructureManager structureManager, ChunkGenerator generator, RandomSource random, BoundingBox box, ChunkPos chunkPos, BlockPos pos, CallbackInfo ci, int i, int j, int k, int l, int i1, BlockState state, int j1, int k1) {
         if (random.nextInt(100) < 5) {
-            this.createDecoratedPot(level, box, random, 2, 0, k1 - 1, DPM.DESERT_ABANDONED_MINESHAFT_POT);
+            this.createDecoratedPot(level, box, random, 2, 0, k1 - 1, DPM.ABANDONED_MINESHAFT_POT);
         }
 
         if (random.nextInt(100) < 5) {
-            this.createDecoratedPot(level, box, random, 0, 0, k1 + 1, DPM.DESERT_ABANDONED_MINESHAFT_POT);
+            this.createDecoratedPot(level, box, random, 0, 0, k1 + 1, DPM.ABANDONED_MINESHAFT_POT);
         }
     }
 

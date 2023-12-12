@@ -17,7 +17,7 @@ public class DPMChestLoot extends VanillaChestLoot {
 
     @Override
     public void generate(BiConsumer<ResourceLocation, LootTable.Builder> builder) {
-        builder.accept(DPM.DESERT_ABANDONED_MINESHAFT_POT, LootTable.lootTable().withPool(LootPool.lootPool().setRolls(ConstantValue.exactly(1.0F))
+        builder.accept(DPM.ABANDONED_MINESHAFT_POT, LootTable.lootTable().withPool(LootPool.lootPool().setRolls(ConstantValue.exactly(1.0F))
                 .add(LootItem.lootTableItem(Items.EMERALD).apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 8.0F))).setWeight(100))
                 .add(LootItem.lootTableItem(Items.LAPIS_LAZULI).apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 4.0F))).setWeight(100))
                 .add(LootItem.lootTableItem(Items.AMETHYST_SHARD).apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 4.0F))).setWeight(100))
