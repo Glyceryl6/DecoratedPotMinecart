@@ -50,6 +50,7 @@ public class DecoratedPotMinecart extends Item {
             return InteractionResult.FAIL;
         } else {
             ItemStack stack = context.getItemInHand();
+            ItemStack copyOfStack = new ItemStack(stack.getItem());
             if (level instanceof ServerLevel serverLevel) {
                 RailShape railShape = clickedState.getBlock() instanceof BaseRailBlock baseRailBlock
                         ? baseRailBlock.getRailDirection(clickedState, level, clickedPos, null) : RailShape.NORTH_SOUTH;
@@ -60,9 +61,11 @@ public class DecoratedPotMinecart extends Item {
                 MinecartDecoratedPot minecart = new MinecartDecoratedPot(serverLevel, x, y, z);
                 CompoundTag decorationsTag = stack.getTagElement("Decorations");
                 if (decorationsTag != null && !decorationsTag.isEmpty()) {
-                    minecart.setDecorations(DecoratedPotBlockEntity.Decorations.load(decorationsTag));
+                    minecart.setDecorationsFromItemTags(DecoratedPotBlockEntity.Decorations.load(decorationsTag));
+                    copyOfStack.addTagElement("Decorations", decorationsTag);
                 }
 
+                minecart.setDropStack(copyOfStack);
                 EntityType.<MinecartDecoratedPot>createDefaultStackConfig(serverLevel, stack, context.getPlayer()).accept(minecart);
                 serverLevel.addFreshEntity(minecart);
                 serverLevel.gameEvent(GameEvent.ENTITY_PLACE, clickedPos, GameEvent.Context.of(context.getPlayer(), serverLevel.getBlockState(clickedPos.below())));
@@ -118,7 +121,7 @@ public class DecoratedPotMinecart extends Item {
             MinecartDecoratedPot minecart = new MinecartDecoratedPot(serverLevel, d0, d1 + d3, d2);
             CompoundTag decorationsTag = stack.getTagElement("Decorations");
             if (decorationsTag != null && !decorationsTag.isEmpty()) {
-                minecart.setDecorations(DecoratedPotBlockEntity.Decorations.load(decorationsTag));
+                minecart.setDecorationsFromItemTags(DecoratedPotBlockEntity.Decorations.load(decorationsTag));
             }
 
             EntityType.<MinecartDecoratedPot>createDefaultStackConfig(serverLevel, stack, null).accept(minecart);

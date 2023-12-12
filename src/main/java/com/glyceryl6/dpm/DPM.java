@@ -26,7 +26,7 @@ import java.util.Locale;
 @Mod(DPM.MOD_ID)
 public class DPM {
 
-    public static final String MOD_ID = "dpm";
+    public static final String MOD_ID = "decorated_pot_minecart";
     private static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, MOD_ID);
     private static final DeferredRegister<EntityType<?>> ENTITY_TYPES = DeferredRegister.create(Registries.ENTITY_TYPE, MOD_ID);
     private static final DeferredRegister<RecipeSerializer<?>> RECIPE_SERIALIZERS = DeferredRegister.create(Registries.RECIPE_SERIALIZER, MOD_ID);
@@ -39,6 +39,8 @@ public class DPM {
 
     public static final RegistryObject<RecipeSerializer<DecoratedPotMinecartRecipe>> DECORATED_POT_MINECART_SERIALIZER =
             RECIPE_SERIALIZERS.register("crafting_decorated_pot_minecart", () -> new SimpleCraftingRecipeSerializer<>(DecoratedPotMinecartRecipe::new));
+
+    public static final ResourceLocation ABANDONED_MINESHAFT_POT = prefix("pots/abandoned_mineshaft_pot");
 
     public DPM() {
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();

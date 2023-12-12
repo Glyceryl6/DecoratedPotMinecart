@@ -1,0 +1,14 @@
+{
+    "required": true,
+    "minVersion": "0.8",
+    "package": "com.glyceryl6.dpm.mixin",
+    "compatibilityLevel": "JAVA_17",
+    "mixins": [
+        "AccessDecoratedPotPatterns",
+        "MixinMineShaftCorridor"
+    ],
+    "client": [],
+    "injectors": {
+        "defaultRequire": 1
+    }
+}

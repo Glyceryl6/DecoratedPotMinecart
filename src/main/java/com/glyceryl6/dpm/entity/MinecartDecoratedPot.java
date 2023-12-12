@@ -3,8 +3,10 @@ package com.glyceryl6.dpm.entity;
 import com.glyceryl6.dpm.DPM;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stats;
@@ -23,15 +25,20 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.DecoratedPotBlockEntity;
 import net.minecraft.world.level.block.entity.Hopper;
 import net.minecraft.world.level.block.entity.HopperBlockEntity;
+import net.minecraft.world.level.gameevent.GameEvent;
 
 @SuppressWarnings({"resource", "ConstantConditions"})
 public class MinecartDecoratedPot extends AbstractMinecartContainer implements Hopper {
 
     private DecoratedPotBlockEntity.Decorations decorations = DecoratedPotBlockEntity.Decorations.EMPTY;
+    private static final EntityDataAccessor<ItemStack> FRONT_PATTERN = SynchedEntityData.defineId(MinecartDecoratedPot.class, EntityDataSerializers.ITEM_STACK);
+    private static final EntityDataAccessor<ItemStack> BACK_PATTERN = SynchedEntityData.defineId(MinecartDecoratedPot.class, EntityDataSerializers.ITEM_STACK);
+    private static final EntityDataAccessor<ItemStack> LEFT_PATTERN = SynchedEntityData.defineId(MinecartDecoratedPot.class, EntityDataSerializers.ITEM_STACK);
+    private static final EntityDataAccessor<ItemStack> RIGHT_PATTERN = SynchedEntityData.defineId(MinecartDecoratedPot.class, EntityDataSerializers.ITEM_STACK);
+    private static final EntityDataAccessor<ItemStack> DROP_STACK = SynchedEntityData.defineId(MinecartDecoratedPot.class, EntityDataSerializers.ITEM_STACK);
 
     public MinecartDecoratedPot(EntityType<? extends MinecartDecoratedPot> type, Level level) {
         super(type, level);
@@ -41,12 +48,45 @@ public class MinecartDecoratedPot extends AbstractMinecartContainer implements H
         super(DPM.MINECART_DECORATED_POT.get(), x, y, z, level);
     }
 
-    public DecoratedPotBlockEntity.Decorations getDecorations() {
-        return this.decorations;
+    @Override
+    protected void defineSynchedData() {
+        super.defineSynchedData();
+        this.entityData.define(FRONT_PATTERN, Items.BRICK.getDefaultInstance());
+        this.entityData.define(BACK_PATTERN, Items.BRICK.getDefaultInstance());
+        this.entityData.define(LEFT_PATTERN, Items.BRICK.getDefaultInstance());
+        this.entityData.define(RIGHT_PATTERN, Items.BRICK.getDefaultInstance());
+        this.entityData.define(DROP_STACK, DPM.DECORATED_POT_MINECART.get().getDefaultInstance());
     }
 
-    public void setDecorations(DecoratedPotBlockEntity.Decorations decorations) {
-        this.decorations = decorations;
+    public ItemStack[] getDecorations() {
+        return new ItemStack[] {
+                this.entityData.get(FRONT_PATTERN), this.entityData.get(BACK_PATTERN),
+                this.entityData.get(LEFT_PATTERN), this.entityData.get(RIGHT_PATTERN)
+        };
+    }
+
+    public void setDecorationsInDefault(Item front, Item back, Item left, Item right) {
+        this.decorations = new DecoratedPotBlockEntity.Decorations(back, left, right, front);
+        this.entityData.set(FRONT_PATTERN, front.getDefaultInstance());
+        this.entityData.set(BACK_PATTERN, back.getDefaultInstance());
+        this.entityData.set(LEFT_PATTERN, left.getDefaultInstance());
+        this.entityData.set(RIGHT_PATTERN, right.getDefaultInstance());
+    }
+
+    public void setDecorationsFromItemTags(DecoratedPotBlockEntity.Decorations decorations) {
+        this.entityData.set(FRONT_PATTERN, decorations.front().getDefaultInstance());
+        this.entityData.set(BACK_PATTERN, decorations.back().getDefaultInstance());
+        this.entityData.set(LEFT_PATTERN, decorations.left().getDefaultInstance());
+        this.entityData.set(RIGHT_PATTERN, decorations.right().getDefaultInstance());
+    }
+
+    public void setDropStack(ItemStack stack) {
+        this.entityData.set(DROP_STACK, stack);
+    }
+
+    @Override
+    public boolean canBeRidden() {
+        return false;
     }
 
     @Override
@@ -67,6 +107,27 @@ public class MinecartDecoratedPot extends AbstractMinecartContainer implements H
     @Override
     public double getLevelZ() {
         return this.getZ();
+    }
+
+    @Override
+    public boolean hurt(DamageSource source, float amount) {
+        if (this.level().isClientSide || this.isRemoved()) {
+            return true;
+        } else if (this.isInvulnerableTo(source)) {
+            return false;
+        } else {
+            this.setHurtDir(-this.getHurtDir());
+            this.setHurtTime(10);
+            this.markHurt();
+            this.setDamage(this.getDamage() + amount * 10.0F);
+            this.gameEvent(GameEvent.ENTITY_DAMAGE, source.getEntity());
+            boolean isCreative = source.getEntity() instanceof Player player && player.getAbilities().instabuild;
+            if (isCreative || !isCreative && this.getDamage() > 40.0F) {
+                this.destroy(source);
+            }
+
+            return true;
+        }
     }
 
     @Override
@@ -94,7 +155,6 @@ public class MinecartDecoratedPot extends AbstractMinecartContainer implements H
                 double z = this.position().z;
                 serverLevel.sendParticles(ParticleTypes.DUST_PLUME, x, y, z, 7, 0.0F, 0.0F, 0.0F, 0.0F);
             }
-
         } else {
             this.level().playSound(null, this.blockPosition(), SoundEvents.DECORATED_POT_INSERT_FAIL, SoundSource.BLOCKS, 1.0F, 1.0F);
         }
@@ -114,12 +174,22 @@ public class MinecartDecoratedPot extends AbstractMinecartContainer implements H
     protected void addAdditionalSaveData(CompoundTag compoundTag) {
         super.addAdditionalSaveData(compoundTag);
         this.decorations.save(compoundTag);
+        compoundTag.put("FrontPattern", this.entityData.get(FRONT_PATTERN).save(new CompoundTag()));
+        compoundTag.put("BackPattern", this.entityData.get(BACK_PATTERN).save(new CompoundTag()));
+        compoundTag.put("LeftPattern", this.entityData.get(LEFT_PATTERN).save(new CompoundTag()));
+        compoundTag.put("RightPattern", this.entityData.get(RIGHT_PATTERN).save(new CompoundTag()));
+        compoundTag.put("DropStack", this.entityData.get(DROP_STACK).save(new CompoundTag()));
     }
 
     @Override
     protected void readAdditionalSaveData(CompoundTag compoundTag) {
         super.readAdditionalSaveData(compoundTag);
         this.decorations = DecoratedPotBlockEntity.Decorations.load(compoundTag);
+        this.entityData.set(FRONT_PATTERN, ItemStack.of(compoundTag.getCompound("FrontPattern")));
+        this.entityData.set(BACK_PATTERN, ItemStack.of(compoundTag.getCompound("BackPattern")));
+        this.entityData.set(LEFT_PATTERN, ItemStack.of(compoundTag.getCompound("LeftPattern")));
+        this.entityData.set(RIGHT_PATTERN, ItemStack.of(compoundTag.getCompound("RightPattern")));
+        this.entityData.set(DROP_STACK, ItemStack.of(compoundTag.getCompound("DropItem")));
     }
 
     @Override
@@ -128,37 +198,52 @@ public class MinecartDecoratedPot extends AbstractMinecartContainer implements H
     }
 
     @Override
-    public void destroy(DamageSource source) {
-        boolean isUseTool = source.getEntity() instanceof Player player &&
-                player.getItemInHand(player.getUsedItemHand()).is(ItemTags.TOOLS);
+    public void destroy(Item item) {
+        this.kill();
         if (this.level().getGameRules().getBoolean(GameRules.RULE_DOENTITYDROPS)) {
-            if (source.is(DamageTypeTags.IS_PROJECTILE) || isUseTool) {
-                SoundEvent breakSound = SoundType.DECORATED_POT_CRACKED.getBreakSound();
-                this.level().playSound(null, this.blockPosition(), breakSound, SoundSource.BLOCKS, 1.0F, 0.8F);
-                this.decorations.sorted().map(Item::getDefaultInstance).forEach(this::spawnAtLocation);
-                this.chestVehicleDestroyed(source, this.level(), this);
-                this.spawnAtLocation(Items.MINECART);
-                this.kill();
-            } else {
-                super.destroy(source);
+            ItemStack dropStack = this.getPickResult();
+            if (this.hasCustomName()) {
+                dropStack.setHoverName(this.getCustomName());
             }
+
+            this.spawnAtLocation(dropStack);
         }
     }
 
     @Override
+    public void destroy(DamageSource source) {
+        GameRules gameRules = this.level().getGameRules();
+        boolean isUseTool = source.getEntity() instanceof Player player &&
+                player.getItemInHand(player.getUsedItemHand()).is(ItemTags.TOOLS);
+        boolean isCreative = source.getEntity() instanceof Player player && player.getAbilities().instabuild;
+        if (gameRules.getBoolean(GameRules.RULE_DOENTITYDROPS)) {
+            if ((source.is(DamageTypeTags.IS_PROJECTILE) && gameRules.getBoolean(GameRules.RULE_PROJECTILESCANBREAKBLOCKS)) || isUseTool) {
+                this.level().playSound(null, this.blockPosition(), SoundEvents.DECORATED_POT_BREAK, SoundSource.BLOCKS, 1.0F, 0.8F);
+                this.decorations.sorted().map(Item::getDefaultInstance).forEach(this::spawnAtLocation);
+                this.chestVehicleDestroyed(source, this.level(), this);
+                if (!isCreative) {
+                    this.spawnAtLocation(Items.MINECART);
+                }
+            } else {
+                if (isCreative) {
+                    this.chestVehicleDestroyed(source, this.level(), this);
+                } else {
+                    super.destroy(source);
+                }
+            }
+        }
+
+        this.kill();
+    }
+
+    @Override
     public ItemStack getPickResult() {
-        CompoundTag compoundTag = this.decorations.save(new CompoundTag());
-        ItemStack pickResult = new ItemStack(DPM.DECORATED_POT_MINECART.get());
-        pickResult.addTagElement("Decorations", compoundTag);
-        return pickResult;
+        return this.entityData.get(DROP_STACK);
     }
 
     @Override
     public Item getDropItem() {
-        CompoundTag compoundTag = this.decorations.save(new CompoundTag());
-        ItemStack pickResult = new ItemStack(DPM.DECORATED_POT_MINECART.get());
-        pickResult.addTagElement("Decorations", compoundTag);
-        return pickResult.getItem();
+        return this.entityData.get(DROP_STACK).getItem();
     }
 
     @Override

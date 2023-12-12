@@ -14,16 +14,19 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.model.Material;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.level.block.entity.DecoratedPotBlockEntity;
 import net.minecraft.world.level.block.entity.DecoratedPotPatterns;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 
 import javax.annotation.Nullable;
 
-public class DecoratedPotMinecartRenderer<T extends MinecartDecoratedPot> extends MinecartRenderer<T> {
+@OnlyIn(Dist.CLIENT)
+public class DecoratedPotMinecartRenderer extends MinecartRenderer<MinecartDecoratedPot> {
 
-    private final DecoratedPotDisplayModel<T> potModel;
+    private final DecoratedPotDisplayModel<MinecartDecoratedPot> potModel;
 
     public DecoratedPotMinecartRenderer(EntityRendererProvider.Context context) {
         super(context, DPMModelLayers.DECORATED_POT_MINECART);
@@ -31,7 +34,7 @@ public class DecoratedPotMinecartRenderer<T extends MinecartDecoratedPot> extend
     }
 
     @Override
-    public void render(T entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
+    public void render(MinecartDecoratedPot entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
         poseStack.pushPose();
         long i = (long)entity.getId() * 493286711L;
         i = i * i * 4392167121L + i * 98761L;
@@ -57,7 +60,7 @@ public class DecoratedPotMinecartRenderer<T extends MinecartDecoratedPot> extend
 
             poseStack.translate(vec3.x - d0, (vec31.y + vec32.y) / 2.0F - d1, vec3.z - d2);
             Vec3 vec33 = vec32.add(-vec31.x, -vec31.y, -vec31.z);
-            if (vec33.length() != 0.0) {
+            if (vec33.length() != 0.0F) {
                 vec33 = vec33.normalize();
                 entityYaw = (float)(Math.atan2(vec33.z, vec33.x) * 180.0F / Math.PI);
                 f3 = (float)(Math.atan(vec33.y) * 73.0F);
@@ -74,17 +77,17 @@ public class DecoratedPotMinecartRenderer<T extends MinecartDecoratedPot> extend
         }
 
         poseStack.pushPose();
+        ItemStack[] decorations = entity.getDecorations();
         poseStack.scale(0.75F, 0.75F, 0.75F);
         poseStack.translate(-0.5D, -0.2D, -0.5D);
         VertexConsumer vertexConsumer = this.potModel.baseMaterial.buffer(buffer, RenderType::entitySolid);
         this.potModel.neck.render(poseStack, vertexConsumer, packedLight, OverlayTexture.NO_OVERLAY);
         this.potModel.top.render(poseStack, vertexConsumer, packedLight, OverlayTexture.NO_OVERLAY);
         this.potModel.bottom.render(poseStack, vertexConsumer, packedLight, OverlayTexture.NO_OVERLAY);
-        DecoratedPotBlockEntity.Decorations decorations = entity.getDecorations();
-        this.renderSide(this.potModel.frontSide, poseStack, buffer, packedLight, getMaterial(decorations.front()));
-        this.renderSide(this.potModel.backSide, poseStack, buffer, packedLight, getMaterial(decorations.back()));
-        this.renderSide(this.potModel.leftSide, poseStack, buffer, packedLight, getMaterial(decorations.left()));
-        this.renderSide(this.potModel.rightSide, poseStack, buffer, packedLight, getMaterial(decorations.right()));
+        this.renderSide(this.potModel.frontSide, poseStack, buffer, packedLight, getMaterial(decorations[0].getItem()));
+        this.renderSide(this.potModel.backSide, poseStack, buffer, packedLight, getMaterial(decorations[1].getItem()));
+        this.renderSide(this.potModel.leftSide, poseStack, buffer, packedLight, getMaterial(decorations[2].getItem()));
+        this.renderSide(this.potModel.rightSide, poseStack, buffer, packedLight, getMaterial(decorations[3].getItem()));
         poseStack.popPose();
 
         poseStack.scale(-1.0F, -1.0F, 1.0F);
